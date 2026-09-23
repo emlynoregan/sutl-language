@@ -60,16 +60,69 @@
     return result;
   }
 
+  class LimitError extends Error {
+    constructor(reason) {
+      super(`sUTL evaluation stopped: ${reason}`);
+      this.name = "LimitError";
+      this.reason = reason;
+    }
+  }
+
+  function limitsOf(limits) {
+    const maxSteps = limits && limits.maxSteps ? limits.maxSteps : 0;
+    const maxDepth = limits && limits.maxDepth ? limits.maxDepth : 0;
+    if (maxSteps < 0 || maxDepth < 0 || !Number.isFinite(maxSteps) || !Number.isFinite(maxDepth)) {
+      throw new RangeError("sUTL limits must be >= 0");
+    }
+    return { maxSteps, maxDepth };
+  }
+
   class Runner {
     constructor() {
       this.builtins = this.makeBuiltins();
+      this.budget = null;
     }
 
-    evaluate(source, transform, library = {}) {
-      return this.eval(source, transform, library, source, transform);
+    evaluate(source, transform, library = {}, options) {
+      const limits = options && options.limits ? limitsOf(options.limits) : { maxSteps: 0, maxDepth: 0 };
+      const signal = options && options.signal ? options.signal : null;
+      const active = limits.maxSteps || limits.maxDepth || signal;
+      const previous = this.budget;
+      this.budget = active
+        ? { steps: 0, depth: 0, maxSteps: limits.maxSteps, maxDepth: limits.maxDepth, signal }
+        : null;
+      try {
+        return this.eval(source, transform, library || {}, source, transform);
+      } finally {
+        this.budget = previous;
+      }
+    }
+
+    charge() {
+      const budget = this.budget;
+      if (!budget) return false;
+      budget.steps += 1;
+      if (budget.maxSteps && budget.steps > budget.maxSteps) throw new LimitError("steps");
+      if (budget.signal && budget.signal.aborted) throw new LimitError("cancelled");
+      if (budget.maxDepth && budget.depth >= budget.maxDepth) throw new LimitError("depth");
+      budget.depth += 1;
+      return true;
+    }
+
+    release() {
+      if (this.budget) this.budget.depth -= 1;
     }
 
     eval(scope, transform, library, source, rootTransform) {
+      const charged = this.charge();
+      try {
+        return this.dispatch(scope, transform, library, source, rootTransform);
+      } finally {
+        if (charged) this.release();
+      }
+    }
+
+    dispatch(scope, transform, library, source, rootTransform) {
       if (isMap(transform) && "!" in transform)
         return this.eval1(scope, transform, library, source, rootTransform);
       if (isMap(transform) && "!!" in transform)
@@ -95,6 +148,15 @@
     }
 
     quote(scope, transform, library, source, rootTransform) {
+      const charged = this.charge();
+      try {
+        return this.quoteValue(scope, transform, library, source, rootTransform);
+      } finally {
+        if (charged) this.release();
+      }
+    }
+
+    quoteValue(scope, transform, library, source, rootTransform) {
       if (isMap(transform) && "''" in transform)
         return this.eval(scope, transform["''"], library, source, rootTransform);
       if (isMap(transform))
@@ -547,10 +609,29 @@
     return failures.length ? { fail: failures } : { lib: result };
   }
 
+  function evaluateLimited(source, transform, library = {}, options = {}) {
+    return new Runner().evaluate(source, transform, library, options);
+  }
+
+  function compileLimited(transform, library = {}, limits = {}) {
+    const normalized = limitsOf(limits);
+    return {
+      run(source, options = {}) {
+        return new Runner().evaluate(source, transform, library, {
+          limits: normalized,
+          signal: options.signal,
+        });
+      },
+    };
+  }
+
   return {
     Runner,
+    LimitError,
     evaluate: (source, transform, library = {}) =>
       new Runner().evaluate(source, transform, library),
+    evaluateLimited,
+    compileLimited,
     compilelib,
     truthy,
   };

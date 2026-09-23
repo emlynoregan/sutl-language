@@ -19,7 +19,9 @@ numbers, booleans, and null. Programs are values in that same data model.
 - [`contract.json`](contract.json) pins the language version and corpus hash.
 
 An implementation conforms to sUTL 1.0 only when it passes every case in the
-corpus.
+corpus. Release 1.1.0 adds host runtime limits, described in
+[`SPEC.md`](SPEC.md). Those limits do not change a result that finishes inside
+its budget, and the corpus is still run with no limits.
 
 ## Reference verification
 

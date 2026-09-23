@@ -341,6 +341,32 @@ The executable corpus currently produces these historical differences:
 - Python 2 integer division differs from both JavaScript implementations. The
   working dialect uses a JSON-number result and floating division.
 
+## Runtime limits
+
+Evaluation is unbounded unless the host sets a limit. A limit does not change
+a result that finishes inside the budget. Implementations from release 1.1.0
+provide this facility. The 1.0 conformance corpus is unchanged, and it is run
+with no limits.
+
+A **step** is one entry into evaluation of a transform, or one entry into a
+quote walk. **Depth** is how many of those entries are on the stack. The
+outermost entry is depth 1.
+
+The host may set:
+
+- `max_steps` — the most steps that may start. `0` means no step limit.
+- `max_depth` — the deepest entry that may start. `0` means no depth limit.
+- a cancellation signal — checked at every step. Go uses `context.Context`,
+  JavaScript uses `AbortSignal`, and Python uses a zero-argument callable that
+  returns true once the host has cancelled.
+
+The entry that would exceed a limit, or that finds the host already cancelled,
+does not run. The implementation stops and reports `steps`, `depth`, or
+`cancelled`. It does not return a partial value. With both limits unset and no
+cancellation, the result is the ordinary sUTL 1.0 result.
+
+Negative limits are rejected before evaluation starts.
+
 ## Conformance rule
 
 An implementation conforms to sUTL 1.0 only if it produces the expected result

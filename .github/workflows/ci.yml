@@ -21,3 +21,5 @@ jobs:
       - run: python verify.py
       - run: node verify.js
       - run: python verify_parity.py
+      - run: python test_limits.py
+      - run: node test_limits.cjs
