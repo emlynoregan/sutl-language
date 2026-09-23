@@ -22,7 +22,7 @@ case is normative.
 
 ## Data model
 
-sUTL operates on **MAS** values: maps, arrays, and simple values. These are the
+sUTL operates on **MLSNBN** values. These are the
 values that round-trip through JSON:
 
 - map (JSON object with string keys)
@@ -32,7 +32,7 @@ values that round-trip through JSON:
 - boolean
 - null
 
-A transform is itself a MAS value. There is no textual parser beyond JSON:
+A transform is itself an MLSNBN value. There is no textual parser beyond JSON:
 evaluation dispatches on the shape and reserved keys of the transform.
 
 ## Evaluation context
