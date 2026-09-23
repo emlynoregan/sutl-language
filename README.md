@@ -34,8 +34,9 @@ python verify_parity.py
 
 They are included to make the specification independently executable. Released
 packages live in the separate
-[`sutl-py`](https://github.com/emlynoregan/sutl-py) and
-[`sutl-js`](https://github.com/emlynoregan/sutl-js) repositories.
+[`sutl-py`](https://github.com/emlynoregan/sutl-py),
+[`sutl-js`](https://github.com/emlynoregan/sutl-js), and
+[`sutl-go`](https://github.com/emlynoregan/sutl-go) repositories.
 
 ## Versioning
 
