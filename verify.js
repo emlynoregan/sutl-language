@@ -86,9 +86,20 @@ function runCase(testCase) {
   throw new Error(`unknown conformance mode: ${mode}`);
 }
 
+const results = corpus.cases.map((testCase) => ({
+  id: testCase.id,
+  actual: runCase(testCase),
+}));
+
+if (process.argv.includes("--json")) {
+  process.stdout.write(`${JSON.stringify(results)}\n`);
+  process.exit(0);
+}
+
 const failures = [];
-for (const testCase of corpus.cases) {
-  const actual = runCase(testCase);
+for (const result of results) {
+  const testCase = corpus.cases.find((item) => item.id === result.id);
+  const actual = result.actual;
   if (!same(actual, testCase.expected))
     failures.push([testCase.id, testCase.expected, actual]);
 }

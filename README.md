@@ -29,10 +29,13 @@ two implementations and verify the contract:
 ```powershell
 python verify.py
 node verify.js
+python verify_parity.py
 ```
 
 They are included to make the specification independently executable. Released
-packages live in the separate `sutl-py` and `sutl-js` repositories.
+packages live in the separate
+[`sutl-py`](https://github.com/emlynoregan/sutl-py) and
+[`sutl-js`](https://github.com/emlynoregan/sutl-js) repositories.
 
 ## Versioning
 
